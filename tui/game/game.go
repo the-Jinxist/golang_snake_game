@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -65,6 +66,11 @@ func (g *GameModel) isSnake(x int, y int) bool {
 	return isSnake
 }
 
+func (g *GameModel) isFood(x int, y int) bool {
+	food := g.Food
+	return x == food.X && y == food.Y
+}
+
 func (g *GameModel) directionToPosition(direction Direction) Position {
 	position := Position{
 		Y: 0, X: 1,
@@ -83,12 +89,29 @@ func (g *GameModel) directionToPosition(direction Direction) Position {
 }
 
 func (g *GameModel) isWall(x int, y int) bool {
-	return x > g.Rows || y > g.Columns
+	return x > g.Rows || y > g.Columns || x < 0 || y < 0
 }
 
 // Init implements tea.Model.
 func (g *GameModel) Init() tea.Cmd {
+	rand.NewSource(time.Now().UnixNano())
+	g.instantiateFood()
 	return tea.Batch(g.Tick())
+}
+
+func (g *GameModel) instantiateFood() {
+	randomX := rand.Intn(g.Rows)
+	randomY := rand.Intn(g.Columns)
+
+	for g.isSnake(randomX, randomY) {
+		randomX = rand.Intn(g.Rows)
+		randomY = rand.Intn(g.Columns)
+	}
+
+	g.Food = Position{
+		X: randomX,
+		Y: randomY,
+	}
 }
 
 // Update implements tea.Model.
@@ -141,8 +164,23 @@ func (g *GameModel) moveSnake() {
 
 	currentSnakeHead := g.Snake[0]
 
+	if g.isWall(currentSnakeHead.X, currentSnakeHead.Y) {
+		fmt.Println("Game over")
+	}
+
 	movingToX := currentSnakeHead.X + pos.X
 	movingToY := currentSnakeHead.Y + pos.Y
+
+	if g.isFood(currentSnakeHead.X, currentSnakeHead.Y) {
+		g.instantiateFood()
+		newSnakeHead := Position{
+			X: movingToX,
+			Y: movingToY,
+		}
+
+		g.Snake = append([]Position{newSnakeHead}, g.Snake...)
+
+	}
 
 	newSnakeHead := Position{
 		X: movingToX,
@@ -151,10 +189,6 @@ func (g *GameModel) moveSnake() {
 
 	g.Snake = g.Snake[:len(g.Snake)-1]
 	g.Snake = append([]Position{newSnakeHead}, g.Snake...)
-
-	if g.isWall(movingToX, movingToY) {
-		fmt.Println("Game over")
-	}
 }
 
 // View implements tea.Model.
@@ -167,6 +201,8 @@ func (g *GameModel) View() string {
 
 			if g.isSnake(j, i) {
 				output += cellStyle.Render(FilledCell)
+			} else if g.isFood(j, i) {
+				output += cellStyle.Foreground(lipgloss.Color("205")).Render(FilledCell)
 			} else {
 				output += cellStyle.Render(EmptyCell)
 			}
