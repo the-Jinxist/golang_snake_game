@@ -9,7 +9,9 @@ type Tick struct{}
 type GameStartConfig struct {
 	Rows           int
 	Columns        int
-	Walls          []Position
+	Pillars        []Position
+	IsWalled       bool
+	Scoring        int
 	ScoreService   internal.ScoreService
 	SessionManager internal.SessionManager
 }
@@ -27,9 +29,10 @@ func TickGame() tea.Cmd {
 
 func DefaultGameConfig() GameStartConfig {
 	return GameStartConfig{
-		Rows:    30,
-		Columns: 25,
-
+		Rows:           30,
+		Columns:        25,
+		Scoring:        10,
+		IsWalled:       false,
 		ScoreService:   internal.GetScoreService(),
 		SessionManager: internal.GetSessionManager(),
 	}

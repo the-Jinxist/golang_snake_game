@@ -32,10 +32,5 @@ func IntializeConfigs() {
 	}
 
 	sessionManager = NewSessionManager()
-	currSession, err := sessionManager.GetCurrentSession()
-	if err != nil {
-		log.Fatalf("error getting current session")
-	}
-
-	scoreService = NewScoreService(user, currSession, db)
+	scoreService = NewScoreService(user, sessionManager, db)
 }

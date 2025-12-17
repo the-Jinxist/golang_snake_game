@@ -1,6 +1,7 @@
 package game
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -33,9 +34,8 @@ type Food struct {
 }
 
 type GameModel struct {
-	Rows    int
-	Columns int
-	Snake   []Position
+	Config GameStartConfig
+	Snake  []Position
 
 	Food       Food
 	Direction  Direction
@@ -44,16 +44,15 @@ type GameModel struct {
 	isPaused   bool
 }
 
-func InitalGameModel(game GameStartConfig) *GameModel {
+func InitalGameModel(gameConfig GameStartConfig) *GameModel {
 	gameMod := &GameModel{
-		Rows:    game.Rows,
-		Columns: game.Columns,
 		Snake: []Position{
 			{
-				X: game.Rows / 2,
-				Y: game.Columns / 2,
+				X: gameConfig.Rows / 2,
+				Y: gameConfig.Columns / 2,
 			},
 		},
+		Config:    gameConfig,
 		Direction: Right,
 		Score:     0,
 	}
@@ -94,8 +93,12 @@ func (g *GameModel) directionToPosition(direction Direction) Position {
 	return position
 }
 
+func (g *GameModel) hasHitWall(x int, y int) bool {
+	return g.isOutOfBounds(x, y) && g.Config.IsWalled
+}
+
 func (g *GameModel) isOutOfBounds(x int, y int) bool {
-	return x > g.Rows || y > g.Columns || x < 0 || y < 0
+	return x > g.Config.Rows || y > g.Config.Columns || x < 0 || y < 0
 }
 
 // Init implements tea.Model.
@@ -106,12 +109,16 @@ func (g *GameModel) Init() tea.Cmd {
 }
 
 func (g *GameModel) instantiateFood() {
-	randomX := rand.Intn(g.Rows)
-	randomY := rand.Intn(g.Columns)
+
+	rows := g.Config.Rows
+	columns := g.Config.Columns
+
+	randomX := rand.Intn(rows)
+	randomY := rand.Intn(columns)
 
 	for g.isSnake(randomX, randomY) {
-		randomX = rand.Intn(g.Rows)
-		randomY = rand.Intn(g.Columns)
+		randomX = rand.Intn(rows)
+		randomY = rand.Intn(columns)
 	}
 
 	g.Food = Food{
@@ -188,7 +195,7 @@ func (g *GameModel) moveSnake() {
 	currentSnakeHead := g.Snake[0]
 
 	//If snake is out of bounds
-	if g.isOutOfBounds(currentSnakeHead.X, currentSnakeHead.Y) {
+	if g.hasHitWall(currentSnakeHead.X, currentSnakeHead.Y) {
 		g.IsGameOver = true
 	}
 
@@ -211,10 +218,29 @@ func (g *GameModel) moveSnake() {
 			Y: movingToY,
 		}
 
-		g.Score += 10
+		g.increaseScore()
 
 		g.Snake = append([]Position{newSnakeHead}, g.Snake...)
 
+	}
+
+	//Snap snake back to the opp. side of stage if he goes out of bounds
+	if g.isOutOfBounds(movingToX, movingToY) {
+		if movingToX > g.Config.Rows {
+			movingToX = 0
+		}
+
+		if movingToX < 0 {
+			movingToX = g.Config.Rows
+		}
+
+		if movingToY > g.Config.Columns {
+			movingToY = 0
+		}
+
+		if movingToY < 0 {
+			movingToY = g.Config.Columns
+		}
 	}
 
 	newSnakeHead := Position{
@@ -226,13 +252,22 @@ func (g *GameModel) moveSnake() {
 	g.Snake = append([]Position{newSnakeHead}, g.Snake...)
 }
 
+func (g *GameModel) increaseScore() {
+	g.Score += g.Config.Scoring
+
+	go func() {
+		g.Config.ScoreService.SetCurrentScore(context.Background(), g.Score)
+	}()
+
+}
+
 // View implements tea.Model.
 func (g *GameModel) View() string {
 
 	cellStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#CCCCCC"))
 	var output string
-	for i := range g.Columns {
-		for j := range g.Rows {
+	for i := range g.Config.Columns {
+		for j := range g.Config.Rows {
 
 			if g.isSnake(j, i) {
 				output += cellStyle.Render(FilledCell)
@@ -246,7 +281,7 @@ func (g *GameModel) View() string {
 		output += "\n"
 	}
 
-	output = lipgloss.NewStyle().Border(lipgloss.ASCIIBorder(), true).Render(output)
+	output = lipgloss.NewStyle().Border(lipgloss.ASCIIBorder(), g.Config.IsWalled).Render(output)
 
 	output += "\n"
 

@@ -1,10 +1,12 @@
 package menu
 
 import (
+	"context"
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/the-Jinxist/golang_snake_game/internal"
 	"github.com/the-Jinxist/golang_snake_game/tui/views"
 )
 
@@ -87,9 +89,10 @@ func (m StartGameModel) View() string {
 		Height(5)
 
 	title := combinedTitle
-	options := fmt.Sprint(
-		"\n",
-	)
+	title += "\n"
+	title += style.Render(fmt.Sprintf("Your current highscore is: %d", getHighScore()))
+
+	options := ""
 
 	for index, value := range m.choices {
 
@@ -100,5 +103,16 @@ func (m StartGameModel) View() string {
 
 		options += style.Render(fmt.Sprintf("\n%s%s", prefix, value))
 	}
+
 	return title + options
+}
+
+func getHighScore() int {
+	score, err := internal.GetScoreService().GetHighScore(context.Background())
+	if err != nil {
+		fmt.Printf("error: %s", err)
+		return 0
+	}
+
+	return score.Value
 }
