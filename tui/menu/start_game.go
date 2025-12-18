@@ -68,16 +68,16 @@ func (m StartGameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.cursor = nextCursor
 		case "enter", " ":
-			fmt.Print("\033[H\033[2J")
 
 			if m.cursor == 1 {
-				return m, tea.Batch(views.SwitchModeCmd(views.ModeLeaderboard))
+				return m, tea.Batch(views.ClearScreen(), views.SwitchModeCmd(views.ModeLeaderboard))
 			}
 
 			if m.cursor == 2 {
 				return m, tea.Quit
 			}
 
+			fmt.Print("\033[H\033[2J")
 			return m, tea.Batch(views.SwitchModeCmd(views.ModeGame))
 		}
 

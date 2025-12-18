@@ -30,6 +30,7 @@ func (s *SuperSnake) setChild(mode views.Mode) {
 		s.child = leaderboard.NewLeaderboardModel(
 			leaderboard.DefaultLeaderboardConfig(),
 		)
+		return
 	}
 
 	s.child = menu.InitalModel()

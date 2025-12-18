@@ -3,38 +3,32 @@ package leaderboard
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/the-Jinxist/golang_snake_game/internal"
 	"github.com/the-Jinxist/golang_snake_game/tui/views"
 )
 
-const listHeight = 14
+const leaderboardTitle = `
+_      _____   ___  ______  _____  ______  ______  _____   ___  ______ ______ 
+| |    |  ___| / _ \ |  _  \|  ___| | ___ \ | ___ \|  _  | / _ \ | ___ \|  _  \
+| |    | |__  / /_\ \| | | || |__   | |_/ / | |_/ /| | | |/ /_\ \| |_/ /| | | |
+| |    |  __| |  _  || | | ||  __|  |    /  | ___ \| | | ||  _  ||    / | | | |
+| |____| |___ | | | || |/ / | |___  | |\ \  | |_/ /\ \_/ /| | | || |\ \ | |/ / 
+\_____/\____/ \_| |_/|___/  \____/  \_| \_| \____/  \___/ \_| |_/\_| \_||___/
+
+`
 
 var (
 	_ tea.Model = &Leaderboard{}
 
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
+	highscoreStyle = lipgloss.NewStyle().MarginLeft(2).PaddingLeft(1).PaddingRight(1).Background(lipgloss.Color("#87CEFA"))
+	scoreStyle     = lipgloss.NewStyle().Bold(true)
+	descStyle      = lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("#DDDDDD"))
 )
 
-type item struct {
-	TimeOfScore time.Time
-	Score       int
-}
-
-func (i item) FilterValue() string { return "" }
-func (i item) Title() string       { return fmt.Sprintf("%d", i.Score) }
-func (i item) Description() string {
-	return fmt.Sprintf("Score was recorded at: %s", i.TimeOfScore)
-}
-
 type Leaderboard struct {
-	list   list.Model
 	Scores []internal.Score
 	Config LeaderboardConfig
 }
@@ -42,22 +36,11 @@ type Leaderboard struct {
 func NewLeaderboardModel(config LeaderboardConfig) *Leaderboard {
 
 	const defaultWidth = 20
-	var userItems []list.Item
 	scores, _ := config.ScoreService.GetScores(context.Background())
-
-	for _, i := range scores {
-		userItems = append(userItems, item{
-			TimeOfScore: i.CreatedAt,
-			Score:       i.Value,
-		})
-	}
-
-	l := list.New(userItems, list.DefaultDelegate{}, defaultWidth, listHeight)
-	l.Title = "Your leaderboard!"
-	l.Styles.Title = titleStyle
 
 	return &Leaderboard{
 		Config: config,
+		Scores: scores,
 	}
 }
 
@@ -69,25 +52,39 @@ func (l *Leaderboard) Init() tea.Cmd {
 // Update implements tea.Model.
 func (l *Leaderboard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		l.list.SetWidth(msg.Width)
-		return l, nil
 
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
-		case "q", "ctrl+c":
+		case "ctrl+c":
 			return l, tea.Quit
 		case "esc":
-			return l, tea.Batch(views.SwitchModeCmd(views.ModeMenu))
+			return l, tea.Batch(views.ClearScreen(), views.SwitchModeCmd(views.ModeMenu))
 		}
 	}
 
 	var cmd tea.Cmd
-	l.list, cmd = l.list.Update(msg)
 	return l, cmd
 }
 
 // View implements tea.Model.
 func (l *Leaderboard) View() string {
-	return "\n" + l.list.View()
+
+	title := leaderboardTitle
+	description := "\n\n"
+
+	for i, value := range l.Scores {
+		description += scoreStyle.Render(fmt.Sprintf("Score: %d", value.Value))
+		if i == 0 {
+			description += highscoreStyle.Render("Highscore")
+		}
+
+		description += "\n"
+		description += descStyle.Render(fmt.Sprintf("Recorded at %s", value.CreatedAt.GoString()))
+
+		description += "\n\n"
+	}
+
+	help := "\n\n\nPress [esc] to return back to menu screen"
+
+	return title + description + help
 }

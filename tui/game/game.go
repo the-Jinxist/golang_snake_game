@@ -213,6 +213,10 @@ func (g *GameModel) moveSnake() {
 		return
 	}
 
+	if g.IsOutOfBounds {
+		return
+	}
+
 	if g.isFood(currentSnakeHead.X, currentSnakeHead.Y) {
 		g.instantiateFood()
 		newSnakeHead := Position{
@@ -227,21 +231,22 @@ func (g *GameModel) moveSnake() {
 	}
 
 	//Snap snake back to the opp. side of stage if he goes out of bounds
-	if g.isOutOfBounds(movingToX, movingToY) {
+	if g.isOutOfBounds(movingToX, movingToY) ||
+		g.isOutOfBounds(currentSnakeHead.X, currentSnakeHead.Y) {
 		g.IsOutOfBounds = true
-		if movingToX > g.Config.Rows {
+		if movingToX > g.Config.Rows || currentSnakeHead.X > g.Config.Rows {
 			movingToX = 0
 		}
 
-		if movingToX < 0 {
+		if movingToX < 0 || currentSnakeHead.X < 0 {
 			movingToX = g.Config.Rows
 		}
 
-		if movingToY > g.Config.Columns {
+		if movingToY > g.Config.Columns || currentSnakeHead.Y > g.Config.Columns {
 			movingToY = 0
 		}
 
-		if movingToY < 0 {
+		if movingToY < 0 || currentSnakeHead.Y < 0 {
 			movingToY = g.Config.Columns
 		}
 	}
