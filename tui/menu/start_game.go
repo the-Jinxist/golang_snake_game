@@ -36,9 +36,8 @@ type StartGameModel struct {
 
 func InitalModel() StartGameModel {
 	return StartGameModel{
-		choices: []string{"Start Game", "Exit"},
-
-		cursor: 0,
+		choices: []string{"Start Game", "Leaderboard", "Exit"},
+		cursor:  0,
 	}
 }
 
@@ -69,6 +68,8 @@ func (m StartGameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.cursor = nextCursor
 		case "enter", " ":
+			fmt.Print("\033[H\033[2J")
+
 			if m.cursor == 1 {
 				return m, tea.Batch(views.SwitchModeCmd(views.ModeLeaderboard))
 			}

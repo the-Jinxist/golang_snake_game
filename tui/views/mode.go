@@ -19,6 +19,12 @@ type SwitchModeMsg struct {
 
 type ExitGameMsg struct{}
 
+func ClearScreen() tea.Cmd {
+	return func() tea.Msg {
+		return tea.ClearScreen()
+	}
+}
+
 func SwitchModeCmd(target Mode) tea.Cmd {
 	return func() tea.Msg {
 		return SwitchModeMsg{

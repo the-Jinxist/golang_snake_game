@@ -37,11 +37,12 @@ type GameModel struct {
 	Config GameStartConfig
 	Snake  []Position
 
-	Food       Food
-	Direction  Direction
-	Score      int
-	IsGameOver bool
-	isPaused   bool
+	Food          Food
+	Direction     Direction
+	Score         int
+	IsGameOver    bool
+	IsOutOfBounds bool
+	isPaused      bool
 }
 
 func InitalGameModel(gameConfig GameStartConfig) *GameModel {
@@ -170,9 +171,11 @@ func (g *GameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case Tick:
 
-		if !g.isPaused {
+		if !g.isPaused && !g.IsOutOfBounds {
 			g.moveSnake()
 		}
+
+		g.IsOutOfBounds = false
 
 		return g, tea.Batch(g.Tick())
 	default:
@@ -189,7 +192,6 @@ func (g *GameModel) Tick() tea.Cmd {
 }
 
 func (g *GameModel) moveSnake() {
-
 	pos := g.directionToPosition(g.Direction)
 
 	currentSnakeHead := g.Snake[0]
@@ -226,6 +228,7 @@ func (g *GameModel) moveSnake() {
 
 	//Snap snake back to the opp. side of stage if he goes out of bounds
 	if g.isOutOfBounds(movingToX, movingToY) {
+		g.IsOutOfBounds = true
 		if movingToX > g.Config.Rows {
 			movingToX = 0
 		}

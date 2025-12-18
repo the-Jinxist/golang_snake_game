@@ -82,6 +82,7 @@ func (s *ScoreServiceImpol) GetScores(ctx context.Context) ([]Score, error) {
 	for rows.Next() {
 		var score Score
 		err = rows.Scan(
+			&score.ID,
 			&score.User,
 			&score.Session,
 			&score.Value,
