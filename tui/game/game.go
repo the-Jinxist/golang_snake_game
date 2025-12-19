@@ -99,7 +99,7 @@ func (g *GameModel) hasHitWall(x int, y int) bool {
 }
 
 func (g *GameModel) isOutOfBounds(x int, y int) bool {
-	return x > g.Config.Rows || y > g.Config.Columns || x < 0 || y < 0
+	return x > g.Config.Rows-1 || y > g.Config.Columns-1 || x < 0 || y < 0
 }
 
 // Init implements tea.Model.
@@ -171,11 +171,9 @@ func (g *GameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case Tick:
 
-		if !g.isPaused && !g.IsOutOfBounds {
+		if !g.isPaused {
 			g.moveSnake()
 		}
-
-		g.IsOutOfBounds = false
 
 		return g, tea.Batch(g.Tick())
 	default:
@@ -213,11 +211,7 @@ func (g *GameModel) moveSnake() {
 		return
 	}
 
-	if g.IsOutOfBounds {
-		return
-	}
-
-	if g.isFood(currentSnakeHead.X, currentSnakeHead.Y) {
+	if g.isFood(movingToX, movingToY) {
 		g.instantiateFood()
 		newSnakeHead := Position{
 			X: movingToX,
@@ -233,21 +227,22 @@ func (g *GameModel) moveSnake() {
 	//Snap snake back to the opp. side of stage if he goes out of bounds
 	if g.isOutOfBounds(movingToX, movingToY) ||
 		g.isOutOfBounds(currentSnakeHead.X, currentSnakeHead.Y) {
-		g.IsOutOfBounds = true
-		if movingToX > g.Config.Rows || currentSnakeHead.X > g.Config.Rows {
+
+		// g.IsOutOfBounds = true
+		if movingToX > g.Config.Rows-1 || currentSnakeHead.X > g.Config.Rows-1 {
 			movingToX = 0
 		}
 
 		if movingToX < 0 || currentSnakeHead.X < 0 {
-			movingToX = g.Config.Rows
+			movingToX = g.Config.Rows - 1
 		}
 
-		if movingToY > g.Config.Columns || currentSnakeHead.Y > g.Config.Columns {
+		if movingToY > g.Config.Columns-1 || currentSnakeHead.Y > g.Config.Columns-1 {
 			movingToY = 0
 		}
 
 		if movingToY < 0 || currentSnakeHead.Y < 0 {
-			movingToY = g.Config.Columns
+			movingToY = g.Config.Columns - 1
 		}
 	}
 
