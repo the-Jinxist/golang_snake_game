@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"context"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/the-Jinxist/golang_snake_game/internal"
 	"github.com/the-Jinxist/golang_snake_game/tui/game"
 	"github.com/the-Jinxist/golang_snake_game/tui/leaderboard"
 	"github.com/the-Jinxist/golang_snake_game/tui/menu"
@@ -31,9 +34,38 @@ func (s *SuperSnake) setChild(mode views.Mode) {
 			leaderboard.DefaultLeaderboardConfig(),
 		)
 		return
+	case views.ModeGameCompleted:
+		score, _ := internal.GetScoreService().GetCurrentScore(context.Background())
+		s.child = game.NewGameCompletedModel(score)
+	default:
+		s.child = game.InitalGameModel(NextLevelConfigFromMode(mode))
+		return
+	}
+}
+
+func NextLevelConfigFromMode(level views.Mode) game.GameStartConfig {
+
+	if level == 0 {
+		return game.Level1GameConfig()
 	}
 
-	s.child = menu.InitalModel()
+	if level == 1 {
+		return game.Level2GameConfig()
+	}
+
+	if level == 2 {
+		return game.Level3GameConfig()
+	}
+
+	if level == 3 {
+		return game.Level4GameConfig()
+	}
+
+	if level == 4 {
+		return game.Level5GameConfig()
+	}
+
+	return game.Level1GameConfig()
 }
 
 func (s *SuperSnake) Init() tea.Cmd {

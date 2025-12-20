@@ -3,10 +3,12 @@ package game
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
 	"github.com/Broderick-Westrope/charmutils"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/the-Jinxist/golang_snake_game/tui/views"
@@ -43,10 +45,20 @@ type GameModel struct {
 	Score         int
 	IsGameOver    bool
 	IsOutOfBounds bool
+	spinner       spinner.Model
 	isPaused      bool
 }
 
 func InitalGameModel(gameConfig GameStartConfig) *GameModel {
+
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+
+	currentScore, err := gameConfig.ScoreService.GetCurrentScore(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to get current score: %s", err)
+	}
+
 	gameMod := &GameModel{
 		Snake: []Position{
 			{
@@ -56,7 +68,8 @@ func InitalGameModel(gameConfig GameStartConfig) *GameModel {
 		},
 		Config:    gameConfig,
 		Direction: Right,
-		Score:     0,
+		Score:     currentScore,
+		spinner:   s,
 	}
 
 	return gameMod
@@ -133,6 +146,7 @@ func (g *GameModel) instantiateFood() {
 
 // Update implements tea.Model.
 func (g *GameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		input := msg.String()
@@ -186,15 +200,30 @@ func (g *GameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			g.moveSnake()
 		}
 
-		return g, tea.Batch(g.Tick())
+		return g, tea.Batch(g.Tick(), g.spinner.Tick)
 	default:
-		return g, tea.Batch(g.Tick())
+		return g, tea.Batch(g.Tick(), g.spinner.Tick)
 
 	}
 
 }
 
+func (g *GameModel) hasReachedLevelThreshold() bool {
+	return g.Score == g.Config.ScoreThreshold
+}
+
 func (g *GameModel) Tick() tea.Cmd {
+
+	if g.hasReachedLevelThreshold() {
+
+		if g.Config.Level == 5 {
+			return tea.Batch(views.SwitchModeCmd(views.ModeGameCompleted))
+		}
+
+		time.Sleep(2 * time.Second)
+		return tea.Batch(views.SwitchModeCmd(views.ModeGame))
+	}
+
 	return tea.Tick(time.Second/4, func(t time.Time) tea.Msg {
 		return Tick{}
 	})
@@ -218,7 +247,7 @@ func (g *GameModel) moveSnake() {
 		g.IsGameOver = true
 	}
 
-	if g.IsGameOver {
+	if g.IsGameOver || g.hasReachedLevelThreshold() {
 		return
 	}
 
@@ -309,8 +338,18 @@ func (g *GameModel) View() string {
 			Render(fmt.Sprintf("Your score: %d. Press SPACE to pause!", g.Score))
 	}
 
+	if g.hasReachedLevelThreshold() {
+		levelingUpMsg := "We're going up!"
+		levelingUpMsg += "/n"
+		levelingUpMsg += lipgloss.NewStyle().
+			AlignHorizontal(lipgloss.Center).
+			Render(g.spinner.View())
+		output, _ = charmutils.OverlayCenter(output, levelingUpMsg, false)
+
+	}
+
 	if g.IsGameOver {
-		gameOverMessage := GameOver
+		gameOverMessage := gameOverMsg
 		gameOverMessage += "\n"
 		gameOverMessage += lipgloss.NewStyle().
 			AlignHorizontal(lipgloss.Center).

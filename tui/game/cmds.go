@@ -6,11 +6,16 @@ import (
 )
 
 type Tick struct{}
+
+type TriggerNextLevel struct{}
 type GameStartConfig struct {
 	Rows           int
 	Columns        int
 	Pillars        []Position
 	IsWalled       bool
+	Level          int
+	IsFinalLevel   bool
+	ScoreThreshold int
 	Scoring        int
 	ScoreService   internal.ScoreService
 	SessionManager internal.SessionManager
@@ -28,6 +33,7 @@ func DefaultGameConfig() GameStartConfig {
 		Columns:        25,
 		Scoring:        10,
 		IsWalled:       true,
+		ScoreThreshold: 100,
 		ScoreService:   internal.GetScoreService(),
 		SessionManager: internal.GetSessionManager(),
 	}
@@ -35,9 +41,10 @@ func DefaultGameConfig() GameStartConfig {
 
 func Level1GameConfig() GameStartConfig {
 	return GameStartConfig{
-		Rows:    40,
-		Columns: 25,
-
+		Rows:           40,
+		Columns:        25,
+		ScoreThreshold: 500,
+		Level:          1,
 		ScoreService:   internal.GetScoreService(),
 		SessionManager: internal.GetSessionManager(),
 	}
@@ -45,9 +52,10 @@ func Level1GameConfig() GameStartConfig {
 
 func Level2GameConfig() GameStartConfig {
 	return GameStartConfig{
-		Rows:    45,
-		Columns: 30,
-
+		Rows:           45,
+		Columns:        30,
+		ScoreThreshold: 1000,
+		Level:          2,
 		ScoreService:   internal.GetScoreService(),
 		SessionManager: internal.GetSessionManager(),
 	}
@@ -55,9 +63,10 @@ func Level2GameConfig() GameStartConfig {
 
 func Level3GameConfig() GameStartConfig {
 	return GameStartConfig{
-		Rows:    50,
-		Columns: 35,
-
+		Rows:           50,
+		Columns:        35,
+		ScoreThreshold: 1500,
+		Level:          3,
 		ScoreService:   internal.GetScoreService(),
 		SessionManager: internal.GetSessionManager(),
 	}
@@ -65,22 +74,22 @@ func Level3GameConfig() GameStartConfig {
 
 func Level4GameConfig() GameStartConfig {
 	return GameStartConfig{
-		Rows:    55,
-		Columns: 40,
-
+		Rows:           55,
+		Columns:        40,
+		ScoreThreshold: 2500,
+		Level:          4,
 		ScoreService:   internal.GetScoreService(),
 		SessionManager: internal.GetSessionManager(),
 	}
 }
 
-func Level5GameConfig(
-	scoreService internal.ScoreService,
-	sessionManager internal.SessionManager,
-) GameStartConfig {
+func Level5GameConfig() GameStartConfig {
 	return GameStartConfig{
-		Rows:    60,
-		Columns: 45,
-
+		Rows:           60,
+		Columns:        45,
+		ScoreThreshold: 5000,
+		Level:          5,
+		IsFinalLevel:   true,
 		ScoreService:   internal.GetScoreService(),
 		SessionManager: internal.GetSessionManager(),
 	}
