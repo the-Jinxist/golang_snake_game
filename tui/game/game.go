@@ -151,6 +151,10 @@ func (g *GameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		input := msg.String()
 
+		if g.hasReachedLevelThreshold() {
+			return g, nil
+		}
+
 		if g.IsGameOver {
 			g.Config.SessionManager.DestroyCurrentSession()
 			if utils.KeyMatchesInput(input, utils.Esc, utils.Space) {
@@ -200,9 +204,9 @@ func (g *GameModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			g.moveSnake()
 		}
 
-		return g, tea.Batch(g.Tick(), g.spinner.Tick)
+		return g, tea.Batch(g.Tick())
 	default:
-		return g, tea.Batch(g.Tick(), g.spinner.Tick)
+		return g, tea.Batch(g.Tick())
 
 	}
 
@@ -221,7 +225,8 @@ func (g *GameModel) Tick() tea.Cmd {
 		}
 
 		time.Sleep(2 * time.Second)
-		return tea.Batch(views.SwitchModeCmd(views.ModeGame))
+		nextLevel := views.NextLevelModeFromCurrent(g.Config.Level)
+		return tea.Batch(views.SwitchModeCmd(nextLevel))
 	}
 
 	return tea.Tick(time.Second/4, func(t time.Time) tea.Msg {
@@ -258,9 +263,9 @@ func (g *GameModel) moveSnake() {
 			Y: movingToY,
 		}
 
-		g.increaseScore()
-
 		g.Snake = append([]Position{newSnakeHead}, g.Snake...)
+
+		g.increaseScore()
 
 	}
 
@@ -331,31 +336,38 @@ func (g *GameModel) View() string {
 	if g.isPaused {
 		output += lipgloss.NewStyle().
 			AlignHorizontal(lipgloss.Center).
-			Render(fmt.Sprintf("[ PAUSED ]. Your score: %d. Press SPACE to resume!", g.Score))
+			Render(fmt.Sprintf("[ PAUSED ]. Your score: %d/%d. Press SPACE to resume!", g.Score, g.Config.ScoreThreshold))
 	} else {
 		output += lipgloss.NewStyle().
 			AlignHorizontal(lipgloss.Center).
-			Render(fmt.Sprintf("Your score: %d. Press SPACE to pause!", g.Score))
+			Render(fmt.Sprintf("Your score: %d/%d. Press SPACE to pause!", g.Score, g.Config.ScoreThreshold))
 	}
 
-	if g.hasReachedLevelThreshold() {
-		levelingUpMsg := "We're going up!"
-		levelingUpMsg += "/n"
-		levelingUpMsg += lipgloss.NewStyle().
-			AlignHorizontal(lipgloss.Center).
-			Render(g.spinner.View())
-		output, _ = charmutils.OverlayCenter(output, levelingUpMsg, false)
+	// if g.hasReachedLevelThreshold() {
+	// 	levelingUpMsg := "We're going up!"
+	// 	levelingUpMsg += "/n"
+	// 	levelingUpMsg += lipgloss.NewStyle().
+	// 		AlignHorizontal(lipgloss.Center).
+	// 		Render(g.spinner.View())
+	// 	output, _ = charmutils.OverlayCenter(output, levelingUpMsg, false)
 
-	}
+	// }
 
 	if g.IsGameOver {
 		gameOverMessage := gameOverMsg
 		gameOverMessage += "\n"
 		gameOverMessage += lipgloss.NewStyle().
 			AlignHorizontal(lipgloss.Center).
-			Render(fmt.Sprintf("Your final score is %d\nPress SPACE to go back to menu", g.Score))
+			Render(fmt.Sprintf("Your final score is %d/%d\nPress SPACE to go back to menu", g.Score, g.Config.ScoreThreshold))
 		output, _ = charmutils.OverlayCenter(output, gameOverMessage, false)
 	}
 
-	return output
+	levelIndicator := lipgloss.NewStyle().
+		Align(lipgloss.Center).
+		Padding(1).
+		Background(lipgloss.Color("#3297a8")).
+		Render(fmt.Sprintf("Level %d", g.Config.Level))
+	levelIndicator += "\n"
+
+	return levelIndicator + output
 }

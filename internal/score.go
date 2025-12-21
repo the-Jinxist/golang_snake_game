@@ -141,7 +141,5 @@ func (s *ScoreServiceImpol) SetCurrentScore(ctx context.Context, value int) erro
 		fmt.Printf("error while setting score: %s", err)
 		return err
 	}
-
-	fmt.Printf("seeting score -- success: %d", value)
 	return nil
 }

@@ -18,9 +18,14 @@ type SuperSnake struct {
 	height int
 }
 
+var (
+	startMenu menu.StartGameModel
+)
+
 func NewModel() *SuperSnake {
+	startMenu = menu.InitalModel()
 	return &SuperSnake{
-		child: menu.InitalModel(),
+		child: startMenu,
 	}
 }
 
@@ -37,35 +42,36 @@ func (s *SuperSnake) setChild(mode views.Mode) {
 	case views.ModeGameCompleted:
 		score, _ := internal.GetScoreService().GetCurrentScore(context.Background())
 		s.child = game.NewGameCompletedModel(score)
+
+		return
+
+	case views.ModeMenu:
+		s.child = startMenu
+		return
 	default:
-		s.child = game.InitalGameModel(NextLevelConfigFromMode(mode))
+
+		nextLevelConfig := NextLevelConfigFromMode(mode)
+		s.child = game.InitalGameModel(nextLevelConfig)
 		return
 	}
 }
 
 func NextLevelConfigFromMode(level views.Mode) game.GameStartConfig {
 
-	if level == 0 {
+	switch level {
+	case views.ModeGame1:
+		return game.Level1GameConfig()
+	case views.ModeGame2:
+		return game.Level2GameConfig()
+	case views.ModeGame3:
+		return game.Level3GameConfig()
+	case views.ModeGame4:
+		return game.Level4GameConfig()
+	case views.ModeGame5:
+		return game.Level5GameConfig()
+	default:
 		return game.Level1GameConfig()
 	}
-
-	if level == 1 {
-		return game.Level2GameConfig()
-	}
-
-	if level == 2 {
-		return game.Level3GameConfig()
-	}
-
-	if level == 3 {
-		return game.Level4GameConfig()
-	}
-
-	if level == 4 {
-		return game.Level5GameConfig()
-	}
-
-	return game.Level1GameConfig()
 }
 
 func (s *SuperSnake) Init() tea.Cmd {
@@ -85,6 +91,7 @@ func (s *SuperSnake) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case views.SwitchModeMsg:
 		s.setChild(msg.Target)
+		return s, tea.ClearScreen
 	}
 
 	var cmd tea.Cmd
