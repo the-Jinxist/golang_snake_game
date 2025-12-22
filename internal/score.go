@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"time"
 )
@@ -136,7 +135,6 @@ func (s *ScoreServiceImpol) SetCurrentScore(ctx context.Context, value int) erro
 	where scores.session = excluded.session and scores."user" = excluded."user";
 	 `, s.CurrentUser, session, value)
 	if err != nil {
-		fmt.Printf("error while setting score: %s", err)
 		return err
 	}
 	return nil

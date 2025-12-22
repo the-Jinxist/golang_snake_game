@@ -119,7 +119,6 @@ func (m StartGameModel) View() string {
 func getHighScore() int {
 	score, err := internal.GetScoreService().GetHighScore(context.Background())
 	if err != nil {
-		fmt.Printf("error: %s", err)
 		return 0
 	}
 
