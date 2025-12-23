@@ -25,6 +25,10 @@ A classic Snake game implementation written in Go with a beautiful Terminal User
 
 ---
 
+## Screenshot
+
+<img width="583" height="469" alt="Screenshot 2025-12-21 at 16 56 48" src="https://github.com/user-attachments/assets/effa97f8-9e21-4355-89cd-97cb7bcd4039" />
+
 ## ✨ Features
 
 - **Classic Snake Gameplay**: Navigate your snake to eat food and grow longer
