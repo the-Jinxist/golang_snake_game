@@ -3,6 +3,8 @@ name: Build and publish super_snake release binaries
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "*"
 
@@ -27,7 +29,7 @@ jobs:
         run: choco --version
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: ${{ env.GITHUB_REF_NAME }}
