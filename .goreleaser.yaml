@@ -55,7 +55,7 @@ brews:
     name: super_snake
     # folder: Formula
     description: "Play Snake Xenzia in your terminal"
-    homepage: "https://github.com/the-Jinxist/golang_snake_game"
+    homepage: "https://github.com/the-Jinxist/super_snake"
     skip_upload: false
     post_install: |
         super_snake --help
