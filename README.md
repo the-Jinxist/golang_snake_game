@@ -123,6 +123,17 @@ Then run:
 super_snake
 ```
 
+### Install via Chocolatey
+
+```bash
+choco install super_snake --version=1.3.0
+```
+
+Then run:
+```bash
+super_snake
+```
+
 ---
 
 ## 💻 Usage
